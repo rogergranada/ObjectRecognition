@@ -22,14 +22,6 @@ def check_file(input):
 
 
 def save_json(output, dic):
-    # Ensure that there is not any image without objects
-    dout = {}
-    for image in dic:
-        if dic[image]:
-            dout[image] = dic[image]
-        else:
-            logger.info('Image without bounding box: %s' % image)
-
     logger.info('Saving file %s' % output)
     with open(output, 'w') as outfile:
         json.dump(dout, outfile)
