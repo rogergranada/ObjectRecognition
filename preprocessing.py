@@ -40,43 +40,16 @@ from os.path import join, dirname
 from os.path import realpath, isfile
 import json
 import progressbar
+import misc
+import utils
 
-
-def check_file(input):
-    input = realpath(input)
-    if not isfile(input):
-        logger.error('Input is not a file: %s' % input)
-        sys.error(0)
-    return input
-
-
-def save_json(output, dic):
-    # Ensure that there is not any image without objects
-    dout = {}
-    for image in dic:
-        if dic[image]:
-            dout[image] = dic[image]
-        else:
-            logger.info('Image without bounding box: %s' % image)
-
-    logger.info('Saving file %s' % output)
-    with open(output, 'w') as outfile:
-        json.dump(dout, outfile)
-
-
-def read_json(input):
-    logger.info('Reading file %s' % input)
-    with open(input) as infile:
-        dic = json.load(infile)
-    return dic
-        
 
 def apply_threshold(file_predict, output, threshold):
     """
     Apply threshold on the scores of a predicted file, reducing
     the number of predicted bounding boxes.
     """
-    dpred = read_json(file_predict)
+    dpred = utils.read_json(file_predict)
     
     dic = {}
     discarded = 0
@@ -91,7 +64,7 @@ def apply_threshold(file_predict, output, threshold):
             else:
                 discarded += 1
         pb.update()
-    save_json(output, dic)
+    utils.save_json(output, dic)
     logger.info('Total of discarded bounding boxes: %d' % discarded)
 
 
@@ -100,8 +73,8 @@ def align_files(file_predict, file_ground, output):
     Read ground truth and predicted files and keep only images that 
     appear in both files.
     """
-    dground = read_json(file_ground)
-    dpredict = read_json(file_predict)
+    dground = utils.read_json(file_ground)
+    dpredict = utils.read_json(file_predict)
 
     dic = {}
     aligned = 0
@@ -111,7 +84,7 @@ def align_files(file_predict, file_ground, output):
             aligned += 1
         else:
             logger.info('Discarding image: %s' % image)
-    save_json(output, dic)
+    utils.save_json(output, dic)
     logger.info('Total of aligned images: %d' % aligned)
 
 
@@ -119,14 +92,14 @@ def check_classes(file_predict, file_ground, output):
     """
     Ensure that predicted labels correspond to the ground truth
     """
-    dground = read_json(file_ground)
+    dground = utils.read_json(file_ground)
     dg = {}
     for image in dground:
         for obj in dground[image]:
             dg[obj[0]] = ''
 
     dic = {}
-    dpredict = read_json(file_predict)
+    dpredict = utils.read_json(file_predict)
     for image in dpredict:
         for obj in dpredict[image]:
             if dg.has_key(obj[0]):
@@ -136,7 +109,7 @@ def check_classes(file_predict, file_ground, output):
                     dic[image] = [obj]
             else:
                 logger.info('Discarding bounding box of class: %s' % obj[0])
-    save_json(output, dic)
+    utils.save_json(output, dic)
 
 
 def main(file_predict, file_ground, output, mode, threshold):
